@@ -1,0 +1,73 @@
+############################################################################################
+## VALIDATION LIBRARY 
+library(readxl)
+library(dplyr)
+library(magrittr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+##########################################################################################
+## FUNCTIONS
+format_biom <- function(feature_table){
+  biomformat::read_biom(feature_table) %>%
+    biomformat::biom_data(.)%>%
+    as.matrix(.)%>%
+    as_tibble(.,rownames = NA)%>%
+    tibble::rownames_to_column("OTU") %>%
+    janitor::adorn_percentages("col", na.rm=F) %>%
+    mutate_if(is.numeric , replace_na, replace = 0)%>%
+    mutate_if(., is.numeric, ~ . * 100)
+}
+
+format_expected <- function(table){
+  read.table(table,sep ="\t", header=T)%>%
+    rename_at(vars(-taxonomy),function(x) str_remove(x, "^X"))
+}
+
+format_metadata <- function(table){
+  read.table(table,sep ="\t", header=T)
+}
+
+format_classified <- function(table){
+  read.table(table, sep ="\t", header=T) %>%
+    select(OTU.ID,blast, capsid_type, genotype_capsid)%>%
+    mutate(blast=str_remove(blast, "Caliciviridae Norovirus ")) %>%
+    dplyr::rename(OTU=OTU.ID,genogroup=blast, genotype=capsid_type)
+}
+##################################################################################
+biom <- format_biom("raw_data/LP6/all.otutab.biom") 
+meta <- format_metadata("raw_data/LP6/metadata.tsv") %>%
+  mutate(SampleID=as.character(SampleID)) %>%
+  select(SampleID,season)
+taxa <- format_classified("raw_data/LP6/noronet.tsv")
+expected <- format_expected("raw_data/LP6/expected_composition.tsv")%>% 
+  pivot_longer(!taxonomy,names_to="SampleID", values_to="abundance")%>%
+  filter(abundance >0)%>%
+  mutate(abundance= abundance *100)
+##################################################################################
+# format output
+data <- dplyr::left_join(biom, taxa, by="OTU")%>% distinct()%>%
+  pivot_longer(!c("OTU", "genogroup","genotype","genotype_capsid"),names_to="SampleID", values_to="abundance") %>%
+  #filter(abundance 0.1) %>%
+  full_join(.,meta) %>%
+  select(OTU, SampleID,abundance, genotype, genotype_capsid)%>%
+  select(-OTU)%>%
+  #dplyr::rename(expected_taxonomy=taxonomy) %>%
+  distinct() %>%
+  filter(str_detect(SampleID, 'MIC'))
+"GI.9"="#214E34", "GI.7"="#59344F",,"NA" = "#7D7D66" "GI.3"="#FDE74C"
+my_colours <-  c("GII.7"="#F2452D","GII.4 Sydney_2012"="#604D83", 
+                 "GII.13"="#FD6E8B", "GII.6"="#49A759", "GII.14"="#235789")
+ggplot()+
+  geom_col(data=data, aes(x=abundance, y=SampleID, fill=genotype_capsid)) +
+  scale_fill_manual(values = my_colours) +
+  xlab("Relative abundance") + ylab("Sample ID")+
+  theme_classic2()+ 
+  theme(axis.text.x = element_text(face="bold",  size=16),
+        axis.text.y = element_text(face="bold",size=16),
+        axis.title.x = element_text(size=20, face="bold"),
+        axis.title.y = element_text(size=20, face="bold"),
+        legend.text=element_text(size=20), 
+        legend.title = element_text(size=20)
+  ) + guides(fill=guide_legend(title="Norovirus capsid genotype (NoroNet)"))
+ggsave("plots/validation_library.png")
