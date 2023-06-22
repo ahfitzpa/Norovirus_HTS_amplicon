@@ -3,8 +3,8 @@ experiment_name=${PWD##*/}
 cp metadata.tsv vsearch/metadata.tsv
 
 cd vsearch
-cp /data/Food/analysis/R6564_NGS/amy_fitzpatrick/denoise_comparison/map.pl map.pl
-cp /data/Food/analysis/R6564_NGS/amy_fitzpatrick/denoise_comparison/FROGS_biom_format.R FROGS_biom_format.R
+cp ../map.pl map.pl
+cp ../FROGS_biom_format.R FROGS_biom_format.R
 
 date
 
@@ -256,7 +256,7 @@ echo Unique sequences after de novo chimera detection: $(grep -c "^>" 7.chimera_
 
 echo
 echo Reference chimera detection
-ref_db="/data/Food/analysis/R6564_NGS/amy_fitzpatrick/qiime_NoV_classifier/capsid_db85.fasta"
+ref_db="capsid_db85.fasta"
 
 vsearch --uchime_ref 7.chimera_removal/all.denovo.nonchimeras.fasta \
     --threads $threads \
@@ -318,8 +318,8 @@ biom convert -i input_otu.tsv -o input_otu.biom --table-type="OTU table" --to-js
 
 #################################################################################################################################################################################################################### 
 # classify vsearch datasets with RDP noronet classifier
-classifier_RDP="/data/Food/analysis/R6564_NGS/amy_fitzpatrick/RDP/rdp_classifier_2.13/dist/classifier.jar"
-db_RDP="/data/Food/analysis/R6564_NGS/amy_fitzpatrick/RDP/noronet/noronet_RDP.fasta.properties"
+classifier_RDP="RDP/rdp_classifier_2.13/dist/classifier.jar"
+db_RDP="RDP/noronet/noronet_RDP.fasta.properties"
 mkdir classified_RDP
 java -Xmx8g -jar $classifier_RDP -t $db_RDP -c 0.8 -o classified_RDP/${experiment_name}.classified.tsv 8.cluster/all.otus.fasta
 
