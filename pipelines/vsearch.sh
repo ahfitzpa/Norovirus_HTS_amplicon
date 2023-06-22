@@ -3,8 +3,8 @@ experiment_name=${PWD##*/}
 cp metadata.tsv vsearch/metadata.tsv
 
 cd vsearch
-cp /data/Food/analysis/R6564_NGS/amy_fitzpatrick/denoise_comparison/map.pl map.pl
-cp /data/Food/analysis/R6564_NGS/amy_fitzpatrick/denoise_comparison/FROGS_biom_format.R FROGS_biom_format.R
+cp ../map.pl map.pl
+cp ../FROGS_biom_format.R FROGS_biom_format.R
 
 date
 
@@ -236,7 +236,7 @@ echo Unique sequences after de novo chimera detection: $(grep -c "^>" 7.chimera_
 
 echo
 echo Reference chimera detection
-ref_db="/data/Food/analysis/R6564_NGS/amy_fitzpatrick/qiime_NoV_classifier/capsid_db85.fasta"
+ref_db="capsid_db85.fasta"
 
 vsearch --uchime_ref 7.chimera_removal/all.denovo.nonchimeras.fasta \
     --threads $threads \
